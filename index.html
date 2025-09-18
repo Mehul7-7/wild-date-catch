@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wild Date Catch</title>
+<!-- Wild, playful font -->
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  body, html{
+    margin:0; padding:0;
+    height:100%; width:100%;
+    background:#fff url('assets/background.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Permanent Marker', cursive;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+
+  #landing-container{
+    background: rgba(255,255,255,0.85);
+    padding:30px; border-radius:20px; text-align:center;
+    max-width:400px; width:90%;
+  }
+
+  input[type=text], input[type=tel]{
+    width:80%; padding:10px; margin:10px 0;
+    border-radius:10px; border:2px solid #ff4500;
+    font-size:18px; text-align:center;
+  }
+
+  button{
+    background:#ff4500; color:white; padding:12px 30px;
+    border:none; border-radius:12px; font-size:20px;
+    cursor:pointer; transition:0.3s;
+  }
+  button:hover{ background:#ff6347; }
+
+  #leaderboard{
+    margin-top:20px;
+    text-align:left;
+    max-width:100%;
+  }
+  #leaderboard h2{ color:#ff4500; margin-bottom:10px; text-align:center; }
+  #leaderboard ul{ list-style:none; padding:0; }
+  #leaderboard li{ margin:5px 0; font-size:18px; color:#333; }
+</style>
+</head>
+<body>
+
+<div id="landing-container">
+  <h1>Wild Date Catch</h1>
+  <input type="text" id="username" placeholder="Enter your name">
+  <input type="tel" id="phone" placeholder="Enter your phone number">
+  <br>
+  <button onclick="startGame()">Start Game</button>
+
+  <div id="leaderboard">
+    <h2>Top 10 Players</h2>
+    <ul id="leaderboard-list">
+      <li>Loading...</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyC7SAnqWWTbAmMqMARxykCaXOsvdHgKx_4",
+    authDomain: "wild-date-catch.firebaseapp.com",
+    databaseURL: "https://wild-date-catch-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "wild-date-catch",
+    storageBucket: "wild-date-catch.firebasestorage.app",
+    messagingSenderId: "494127712004",
+    appId: "1:494127712004:web:330240b9cb2d94c76f3251",
+    measurementId: "G-8W9CK2593E"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Fetch leaderboard top 10
+  function fetchLeaderboard(){
+    db.ref('leaderboard').orderByChild('score').limitToLast(10)
+    .on('value', snapshot=>{
+      const data = snapshot.val();
+      const list = document.getElementById('leaderboard-list');
+      list.innerHTML = '';
+      if(data){
+        let sorted = Object.values(data).sort((a,b)=>b.score - a.score);
+        sorted.forEach(p=>{
+          let li = document.createElement('li');
+          li.textContent = `${p.name}: ${p.score}`;
+          list.appendChild(li);
+        });
+      } else {
+        list.innerHTML='<li>No scores yet</li>';
+      }
+    });
+  }
+  fetchLeaderboard();
+
+  // Start game
+  function startGame(){
+    const name = document.getElementById('username').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    if(name=='' || phone=='' || phone.length<6){
+      alert('Please enter a valid name and phone number.');
+      return;
+    }
+
+    // Save initial player info (score will be updated later)
+    const playerRef = db.ref('players').push();
+    playerRef.set({name:name, phone:phone, score:0});
+
+    // Save locally for game page
+    localStorage.setItem('playerName', name);
+
+    // Redirect to game page
+    window.location.href='game.html';
+  }
+</script>
+
+</body>
+</html>
