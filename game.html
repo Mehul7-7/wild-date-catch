@@ -2,286 +2,189 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Wild Date Catch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Junk Collector Game</title>
   <style>
     body {
       margin: 0;
+      padding: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
       overflow: hidden;
-      background: #ffefd5;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      color: #333;
     }
-
     #gameCanvas {
+      background: #222;
       display: block;
-      margin: 0 auto;
-      background: url('assets/bg.png') no-repeat center center;
-      background-size: cover;
+      margin: auto;
     }
-
-    #hud {
+    #scoreBoard {
       position: absolute;
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      justify-content: space-between;
-      width: 90%;
-      font-size: 20px;
-      font-weight: bold;
-      background: rgba(255,255,255,0.7);
-      padding: 5px 10px;
-      border-radius: 8px;
+      font-size: 22px;
     }
-
-    #popup {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 28px;
-      font-weight: bold;
-      display: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.8);
-    }
-
     #gameOverScreen {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
       display: none;
-      background: rgba(255,255,255,0.9);
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
       padding: 20px;
-      border-radius: 15px;
+      border-radius: 10px;
     }
-
-    #gameOverScreen button {
+    #leaderboard {
       margin-top: 15px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: #ff6347;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
+      text-align: left;
     }
-
-<style>
- 
-
-  /* Junk size (bigger) */
-  .junk {
-    width: 140px;   /* adjust here */
-    height: 140px;
-  }
-</style>
-
-
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
 
-  <div id="hud">
-    <div id="scoreBoard">Score: 0</div>
-    <div id="livesBoard">Lives: 5</div>
-  </div>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<div id="scoreBoard">Score: 0</div>
 
-  <div id="popup"></div>
+<div id="gameOverScreen">
+  <h2>Game Over</h2>
+  <p>Your Score: <span id="finalScore"></span></p>
+  <h3>Leaderboard</h3>
+  <ol id="leaderboard"></ol>
+  <button onclick="restartGame()">Restart</button>
+</div>
 
-  <div id="gameOverScreen">
-    <h2>Game Over!</h2>
-    <p id="finalScore">Your Score: 0</p>
-    <button onclick="restartGame()">Play Again</button>
-    <button onclick="shareScore()">Share Score</button>
-  </div>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+let basket = { x: 160, y: 540, width: 80, height: 40, speed: 6 };
+let junkItems = [];
+let score = 0;
+let gameOver = false;
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+// Junk Images (you can replace with your own)
+const junkImg = new Image();
+junkImg.src = "https://cdn-icons-png.flaticon.com/512/565/565547.png"; // example trash icon
 
-    const scoreBoard = document.getElementById("scoreBoard");
-    const livesBoard = document.getElementById("livesBoard");
-    const popup = document.getElementById("popup");
-    const gameOverScreen = document.getElementById("gameOverScreen");
-    const finalScore = document.getElementById("finalScore");
+// Basket Image
+const basketImg = new Image();
+basketImg.src = "https://cdn-icons-png.flaticon.com/512/1045/1045870.png"; // basket icon
 
-    // Basket
-    const basketImg = new Image();
-    basketImg.src = "assets/basket.png";
+function spawnJunk() {
+  const size = 30 + Math.random() * 20;
+  junkItems.push({
+    x: Math.random() * (canvas.width - size),
+    y: -size,
+    size: size,
+    speed: 2 + Math.random() * 3
+  });
+}
 
-    const basket = { 
-      x: canvas.width / 2 - 70, 
-      y: canvas.height - 160, 
-      width: 200, 
-      height: 150 
-    };
+function drawBasket() {
+  ctx.drawImage(basketImg, basket.x, basket.y, basket.width, basket.height);
+}
 
-    // Game state
-    let score = 0;
-    let lives = 5;
-    let gameOver = false;
+function drawJunk() {
+  junkItems.forEach(j => {
+    ctx.drawImage(junkImg, j.x, j.y, j.size, j.size);
+  });
+}
 
-    // Load images
-    const ingredientImgs = [
-      "assets/ingredient1.svg",
-      "assets/ingredient2.svg",
-      "assets/ingredient3.svg",
-      "assets/ingredient4.svg",
-      "assets/ingredient5.svg",
-      "assets/ingredient6.svg",
-    ].map(src => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
+function updateJunk() {
+  junkItems.forEach((j, i) => {
+    j.y += j.speed;
 
-    const junkImgs = [
-      "assets/junk1.png",
-      "assets/junk2.png",
-      "assets/junk3.png",
-    ].map(src => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-
-    let fallingItems = [];
-
-    class Item {
-      constructor(img, x, type) {
-        this.img = img;
-        this.x = x;
-        this.y = -100;
-        this.type = type; 
-        this.speed = 3 + Math.random() * 2;
-
-        if (type === "ingredient") {
-          this.width = 100;
-          this.height = 100;
-        }else {
-          this.width = 160;   // Changed junk width
-          this.height = 160;  // Changed junk height
-        }
-      }
-      draw() {
-        ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
-      }
-      update() {
-        this.y += this.speed;
-      }
+    // Collision detection
+    if (
+      j.x < basket.x + basket.width &&
+      j.x + j.size > basket.x &&
+      j.y < basket.y + basket.height &&
+      j.y + j.size > basket.y
+    ) {
+      score += 10;
+      junkItems.splice(i, 1);
+      document.getElementById("scoreBoard").innerText = "Score: " + score;
     }
 
-    function spawnItem() {
-      const allItems = [
-        ...ingredientImgs.map(img => ({img, type: "ingredient"})),
-        ...junkImgs.map(img => ({img, type: "junk"})),
-      ];
-      const chosen = allItems[Math.floor(Math.random() * allItems.length)];
-      const x = Math.random() * (canvas.width - 100);
-      fallingItems.push(new Item(chosen.img, x, chosen.type));
-    }
-
-    function showPopup(text, color) {
-      popup.innerText = text;
-      popup.style.color = color;
-      popup.style.display = "block";
-      setTimeout(() => { popup.style.display = "none"; }, 700);
-    }
-
-    function detectCollision(a, b) {
-      return a.x < b.x + b.width &&
-             a.x + a.width > b.x &&
-             a.y < b.y + b.height &&
-             a.y + a.height > b.y;
-    }
-
-    function update() {
-      if (gameOver) return;
-
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      // Basket (draw image)
-      ctx.drawImage(basketImg, basket.x, basket.y, basket.width, basket.height);
-
-      // Items
-      fallingItems.forEach((item, i) => {
-        item.update();
-        item.draw();
-
-        if (detectCollision(basket, item)) {
-          if (item.type === "ingredient") {
-            score += 10;
-            showPopup("+10", "green");
-          } else {
-            lives--;
-            showPopup("-1 life", "red");
-          }
-          fallingItems.splice(i, 1);
-        } else if (item.y > canvas.height) {
-          // Missed ingredient = lose life
-          if (item.type === "ingredient") {
-            lives--;
-            showPopup("-1 life", "red");
-          }
-          fallingItems.splice(i, 1);
-        }
-      });
-
-      scoreBoard.innerText = "Score: " + score;
-      livesBoard.innerText = "Lives: " + lives;
-
-      if (lives <= 0) {
-        endGame();
-      }
-
-      requestAnimationFrame(update);
-    }
-
-    function endGame() {
+    // Missed junk
+    if (j.y > canvas.height) {
       gameOver = true;
-      finalScore.innerText = "Your Score: " + score;
-      gameOverScreen.style.display = "block";
+      endGame();
     }
+  });
+}
 
-    function restartGame() {
-      score = 0;
-      lives = 5;
-      gameOver = false;
-      fallingItems = [];
-      gameOverScreen.style.display = "none";
-      update();
+function gameLoop() {
+  if (gameOver) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawBasket();
+  drawJunk();
+  updateJunk();
+
+  requestAnimationFrame(gameLoop);
+}
+
+setInterval(spawnJunk, 1000);
+
+// 🎮 Touch Control (finger drag/swipe)
+canvas.addEventListener("touchmove", (e) => {
+  const touch = e.touches[0];
+  let rect = canvas.getBoundingClientRect();
+  let x = touch.clientX - rect.left;
+  basket.x = x - basket.width / 2;
+
+  // keep inside screen
+  if (basket.x < 0) basket.x = 0;
+  if (basket.x + basket.width > canvas.width) basket.x = canvas.width - basket.width;
+});
+
+// 🎮 Device Tilt (iOS/Android)
+if (window.DeviceOrientationEvent) {
+  window.addEventListener("deviceorientation", (e) => {
+    if (e.gamma !== null) {
+      basket.x += e.gamma * 0.5; // sensitivity
+      if (basket.x < 0) basket.x = 0;
+      if (basket.x + basket.width > canvas.width) basket.x = canvas.width - basket.width;
     }
+  });
+}
 
-    function shareScore() {
-      alert("Share your score: " + score);
-    }
+function endGame() {
+  document.getElementById("finalScore").innerText = score;
 
-    // Controls
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft" && basket.x > 0) basket.x -= 30;
-      if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width) basket.x += 30;
-    });
+  // Save score in localStorage for leaderboard
+  let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+  leaderboard.push(score);
+  leaderboard.sort((a, b) => b - a);
+  leaderboard = leaderboard.slice(0, 5); // top 5
+  localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
 
-    window.addEventListener("deviceorientation", (e) => {
-      if (e.gamma > 5 && basket.x < canvas.width - basket.width) basket.x += 8;
-      if (e.gamma < -5 && basket.x > 0) basket.x -= 8;
-    });
+  let list = document.getElementById("leaderboard");
+  list.innerHTML = "";
+  leaderboard.forEach(s => {
+    let li = document.createElement("li");
+    li.innerText = s;
+    list.appendChild(li);
+  });
 
-    setInterval(spawnItem, 1200); // spawn rate
-    update();
-  </script>
+  document.getElementById("gameOverScreen").style.display = "block";
+}
+
+function restartGame() {
+  score = 0;
+  junkItems = [];
+  gameOver = false;
+  basket.x = 160;
+  document.getElementById("scoreBoard").innerText = "Score: 0";
+  document.getElementById("gameOverScreen").style.display = "none";
+  gameLoop();
+}
+
+gameLoop();
+</script>
+
 </body>
 </html>
