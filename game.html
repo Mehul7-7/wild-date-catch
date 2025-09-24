@@ -2,286 +2,243 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Wild Date Catch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Wild Date Minefield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
-      overflow: hidden;
-      background: #ffefd5;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      color: #333;
-    }
-
-    #gameCanvas {
-      display: block;
-      margin: 0 auto;
-      background: url('assets/bg.png') no-repeat center center;
+      background: url('assets/bg.png') no-repeat center center fixed;
       background-size: cover;
-    }
-
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
+      font-family: 'Permanent Marker', cursive;
       display: flex;
-      justify-content: space-between;
-      width: 90%;
-      font-size: 20px;
-      font-weight: bold;
-      background: rgba(255,255,255,0.7);
-      padding: 5px 10px;
-      border-radius: 8px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      color: #fff;
+      padding: 10px;
     }
-
-    #popup {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 28px;
-      font-weight: bold;
-      display: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    #gameOverScreen {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    h1 {
+      margin: 10px 0 5px;
+      color: #ff4500;
+      text-shadow: 2px 2px 4px #000;
       text-align: center;
-      display: none;
-      background: rgba(255,255,255,0.9);
-      padding: 20px;
-      border-radius: 15px;
     }
-
+    #logo {
+      max-width: 180px;
+      margin: 15px auto;
+      display: block;
+    }
+    #scoreBoard {
+      margin: 10px;
+      font-size: 20px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(155px, 110px));
+      grid-template-rows: repeat(5, minmax(155px, 110px));
+      gap: 8px;
+      justify-content: center;
+    }
+    .cell {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background: rgba(255,255,255,0.8);
+      border: 2px solid #ff4500;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+      overflow: hidden;
+    }
+    .cell img {
+      max-width: 80%;
+      max-height: 80%;
+    }
+    .cell:hover { transform: scale(1.05); }
+    .cell.revealed {
+      background: #fff;
+      cursor: default;
+    }
+    #gameOverScreen {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      padding: 25px;
+      border-radius: 20px;
+      text-align: center;
+      z-index: 999;
+      width: 85%;
+      max-width: 400px;
+    }
     #gameOverScreen button {
       margin-top: 15px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: #ff6347;
-      color: white;
+      background: #ff4500;
+      color: #fff;
+      padding: 10px 25px;
       font-size: 18px;
+      border: none;
+      border-radius: 12px;
       cursor: pointer;
     }
+    #gameOverScreen button:hover { background: #ff6347; }
+    .cta-btn {
+      display: inline-block;
+      margin-top: 12px;
+      background: #ffd700;
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .cta-btn:hover {
+      background: #ffea00;
+    }
 
-<style>
- 
-
-  /* Junk size (bigger) */
-  .junk {
-    width: 140px;   /* adjust here */
-    height: 140px;
-  }
-</style>
-
-
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      #board {
+        grid-template-columns: repeat(5, minmax(80px, 75px));
+        gap: 6px;
+      }
+      .cell {
+        font-size: 20px;
+        border-radius: 10px;
+      }
+      #scoreBoard {
+        font-size: 18px;
+      }
+    }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
 
-  <div id="hud">
-    <div id="scoreBoard">Score: 0</div>
-    <div id="livesBoard">Lives: 5</div>
-  </div>
+<img src="assets/logo.png" id="logo" alt="Wild Date Logo">
+<h1>🍫 Wild Date Minefield 🍫</h1>
+<div id="scoreBoard">Score: 0</div>
+<div id="board"></div>
 
-  <div id="popup"></div>
+<div id="gameOverScreen">
+  <h2 id="gameMessage"></h2>
+  <p>Your Score: <span id="finalScore"></span></p>
+  <p style="color:#ff6347;">Choose Wild Date, not Junk! 💥</p>
+  <button onclick="restartGame()">Play Again</button>
+  <br>
+  <a href="https://wilddate.in" target="_blank" class="cta-btn">Shop Wild Date</a>
+</div>
 
-  <div id="gameOverScreen">
-    <h2>Game Over!</h2>
-    <p id="finalScore">Your Score: 0</p>
-    <button onclick="restartGame()">Play Again</button>
-    <button onclick="shareScore()">Share Score</button>
-  </div>
+<script>
+const boardEl = document.getElementById("board");
+const scoreBoard = document.getElementById("scoreBoard");
+const gameOverScreen = document.getElementById("gameOverScreen");
+const gameMessage = document.getElementById("gameMessage");
+const finalScore = document.getElementById("finalScore");
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+let gridSize = 5;
+let cells = [];
+let score = 0;
+let gameOver = false;
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+const productImgs = [
+  "assets/ingredient1.svg",
+  "assets/ingredient2.svg",
+  "assets/ingredient3.svg",
+  "assets/ingredient4.svg",
+  "assets/ingredient5.svg",
+  "assets/ingredient6.svg",
+];
 
-    const scoreBoard = document.getElementById("scoreBoard");
-    const livesBoard = document.getElementById("livesBoard");
-    const popup = document.getElementById("popup");
-    const gameOverScreen = document.getElementById("gameOverScreen");
-    const finalScore = document.getElementById("finalScore");
+const junkImgs = [
+  "assets/junk1.png",
+  "assets/junk2.png",
+  "assets/junk3.png",
+];
 
-    // Basket
-    const basketImg = new Image();
-    basketImg.src = "assets/basket.png";
+function initBoard() {
+  boardEl.innerHTML = "";
+  cells = [];
+  score = 0;
+  gameOver = false;
+  scoreBoard.innerText = "Score: " + score;
+  gameOverScreen.style.display = "none";
 
-    const basket = { 
-      x: canvas.width / 2 - 70, 
-      y: canvas.height - 160, 
-      width: 200, 
-      height: 150 
-    };
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    let cell = document.createElement("div");
+    cell.classList.add("cell");
+    cell.dataset.index = i;
 
-    // Game state
-    let score = 0;
-    let lives = 5;
-    let gameOver = false;
-
-    // Load images
-    const ingredientImgs = [
-      "assets/ingredient1.svg",
-      "assets/ingredient2.svg",
-      "assets/ingredient3.svg",
-      "assets/ingredient4.svg",
-      "assets/ingredient5.svg",
-      "assets/ingredient6.svg",
-    ].map(src => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-
-    const junkImgs = [
-      "assets/junk1.png",
-      "assets/junk2.png",
-      "assets/junk3.png",
-    ].map(src => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-
-    let fallingItems = [];
-
-    class Item {
-      constructor(img, x, type) {
-        this.img = img;
-        this.x = x;
-        this.y = -100;
-        this.type = type; 
-        this.speed = 3 + Math.random() * 2;
-
-        if (type === "ingredient") {
-          this.width = 100;
-          this.height = 100;
-        }else {
-          this.width = 160;   // Changed junk width
-          this.height = 160;  // Changed junk height
-        }
-      }
-      draw() {
-        ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
-      }
-      update() {
-        this.y += this.speed;
-      }
+    let rand = Math.random();
+    if (rand < 0.25) {
+      cell.dataset.type = "junk";
+      cell.dataset.img = junkImgs[Math.floor(Math.random() * junkImgs.length)];
+    } else {
+      cell.dataset.type = "product";
+      cell.dataset.img = productImgs[Math.floor(Math.random() * productImgs.length)];
     }
 
-    function spawnItem() {
-      const allItems = [
-        ...ingredientImgs.map(img => ({img, type: "ingredient"})),
-        ...junkImgs.map(img => ({img, type: "junk"})),
-      ];
-      const chosen = allItems[Math.floor(Math.random() * allItems.length)];
-      const x = Math.random() * (canvas.width - 100);
-      fallingItems.push(new Item(chosen.img, x, chosen.type));
+    cell.addEventListener("click", revealCell);
+    boardEl.appendChild(cell);
+    cells.push(cell);
+  }
+}
+
+function revealCell(e) {
+  if (gameOver) return;
+  let cell = e.currentTarget;
+  if (cell.classList.contains("revealed")) return;
+
+  cell.classList.add("revealed");
+  let img = document.createElement("img");
+  img.src = cell.dataset.img;
+  cell.appendChild(img);
+
+  if (cell.dataset.type === "product") {
+    score += 10;
+    scoreBoard.innerText = "Score: " + score;
+  } else {
+    endGame(false);
+  }
+
+  let allSafe = cells.every(c => c.dataset.type === "junk" || c.classList.contains("revealed"));
+  if (allSafe && !gameOver) endGame(true);
+}
+
+function endGame(won) {
+  gameOver = true;
+  finalScore.innerText = score;
+  gameMessage.innerText = won ? "🎉 You Won Wild Dates!" : "💥 Junk got you!";
+  gameOverScreen.style.display = "block";
+
+  cells.forEach(c => {
+    if (!c.classList.contains("revealed")) {
+      c.classList.add("revealed");
+      let img = document.createElement("img");
+      img.src = c.dataset.img;
+      c.appendChild(img);
     }
+  });
+}
 
-    function showPopup(text, color) {
-      popup.innerText = text;
-      popup.style.color = color;
-      popup.style.display = "block";
-      setTimeout(() => { popup.style.display = "none"; }, 700);
-    }
+function restartGame() {
+  initBoard();
+}
 
-    function detectCollision(a, b) {
-      return a.x < b.x + b.width &&
-             a.x + a.width > b.x &&
-             a.y < b.y + b.height &&
-             a.y + a.height > b.y;
-    }
+initBoard();
+</script>
 
-    function update() {
-      if (gameOver) return;
-
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      // Basket (draw image)
-      ctx.drawImage(basketImg, basket.x, basket.y, basket.width, basket.height);
-
-      // Items
-      fallingItems.forEach((item, i) => {
-        item.update();
-        item.draw();
-
-        if (detectCollision(basket, item)) {
-          if (item.type === "ingredient") {
-            score += 10;
-            showPopup("+10", "green");
-          } else {
-            lives--;
-            showPopup("-1 life", "red");
-          }
-          fallingItems.splice(i, 1);
-        } else if (item.y > canvas.height) {
-          // Missed ingredient = lose life
-          if (item.type === "ingredient") {
-            lives--;
-            showPopup("-1 life", "red");
-          }
-          fallingItems.splice(i, 1);
-        }
-      });
-
-      scoreBoard.innerText = "Score: " + score;
-      livesBoard.innerText = "Lives: " + lives;
-
-      if (lives <= 0) {
-        endGame();
-      }
-
-      requestAnimationFrame(update);
-    }
-
-    function endGame() {
-      gameOver = true;
-      finalScore.innerText = "Your Score: " + score;
-      gameOverScreen.style.display = "block";
-    }
-
-    function restartGame() {
-      score = 0;
-      lives = 5;
-      gameOver = false;
-      fallingItems = [];
-      gameOverScreen.style.display = "none";
-      update();
-    }
-
-    function shareScore() {
-      alert("Share your score: " + score);
-    }
-
-    // Controls
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft" && basket.x > 0) basket.x -= 30;
-      if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width) basket.x += 30;
-    });
-
-    window.addEventListener("deviceorientation", (e) => {
-      if (e.gamma > 5 && basket.x < canvas.width - basket.width) basket.x += 8;
-      if (e.gamma < -5 && basket.x > 0) basket.x -= 8;
-    });
-
-    setInterval(spawnItem, 1200); // spawn rate
-    update();
-  </script>
 </body>
-</html>  
+</html>
