@@ -13,7 +13,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;   /* center vertically */
       min-height: 100vh;
       color: #fff;
       padding: 10px;
@@ -25,8 +25,8 @@
       text-align: center;
     }
     #logo {
-      max-width: 180px;
-      margin: 15px auto;
+      max-width: 160px;
+      margin: 10px auto;
       display: block;
     }
     #scoreBoard {
@@ -38,31 +38,33 @@
       border-radius: 10px;
       text-align: center;
     }
-    #board {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(155px, 110px));
-      grid-template-rows: repeat(5, minmax(155px, 110px));
-      gap: 8px;
-      justify-content: center;
-    }
+   #board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  width: 100vw;          /* take full screen width */
+  max-width: 600px;      /* allow bigger board */
+  margin-top: 15px;
+  padding: 0 5px;
+}
     .cell {
-      width: 100%;
-      aspect-ratio: 1/1;
-      background: rgba(255,255,255,0.8);
-      border: 2px solid #ff4500;
-      border-radius: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.3s;
-      overflow: hidden;
-    }
-    .cell img {
-      max-width: 80%;
-      max-height: 80%;
-    }
+  width: 100%;
+  aspect-ratio: 1/1;    
+  background: rgba(255,255,255,0.8);
+  border: 2px solid #ff4500;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;      /* bigger font */
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+  overflow: hidden;
+}
+   .cell img {
+  max-width: 90%;
+  max-height: 90%;
+}
     .cell:hover { transform: scale(1.05); }
     .cell.revealed {
       background: #fff;
@@ -108,21 +110,19 @@
     .cta-btn:hover {
       background: #ffea00;
     }
-
-    /* Mobile tweaks */
-    @media (max-width: 600px) {
-      #board {
-        grid-template-columns: repeat(5, minmax(80px, 75px));
-        gap: 6px;
-      }
-      .cell {
-        font-size: 20px;
-        border-radius: 10px;
-      }
-      #scoreBoard {
-        font-size: 18px;
-      }
-    }
+@media (max-width: 600px) {
+  #board {
+    width: 100vw;    /* full width */
+    gap: 12px;       /* more spacing */
+  }
+  .cell {
+    border-radius: 12px;
+    font-size: 24px;
+  }
+  #scoreBoard {
+    font-size: 18px;
+  }
+}
   </style>
 </head>
 <body>
